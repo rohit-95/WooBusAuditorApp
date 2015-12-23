@@ -12,6 +12,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -55,12 +56,13 @@ public class audit_submit extends AppCompatActivity {
         checklist = (LinearLayout)findViewById(R.id.cl1);
         checklist.setOrientation(LinearLayout.VERTICAL);
 
-        loadQuestions();
-
         submit = new Button(this);
         submit.setLayoutParams(lwc);
         submit.setBackgroundColor(Color.LTGRAY);
         submit.setText("Submit");
+        submit.setLayoutParams(lmp);
+
+        loadQuestions();
 
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,14 +87,13 @@ public class audit_submit extends AppCompatActivity {
                 } catch (JSONException e) {
                     Log.e("js", "Invalid JSON string", e);
                 }
-
                 col.addView(temp);
-
                 try {
                     qTypeArray[i] = questions.getJSONObject(i).getString("q_type");
                 } catch (JSONException e) {
                     Log.e("js", "Invalid JSON string", e);
                 }
+
                 switch (qTypeArray[i]) {
                     case "bool" :
                         rg = new RadioGroup(getApplicationContext());
@@ -168,20 +169,27 @@ public class audit_submit extends AppCompatActivity {
         }
         else {
             temp = new TextView(getApplicationContext());
-            temp.setText("No Questions on server");
+            temp.setText("No questions found on server");
+            temp.setLayoutParams(lmp);
             checklist.addView(temp);
             Log.i("noQ", "onCreate: No questions found");
+
+            LinearLayout space = new LinearLayout(getApplicationContext());
+            space.setLayoutParams(lwc);
+            space.setMinimumHeight(20);
+            checklist.addView(space);
         }
         checklist.addView(submit);
     }
 
     private void evalQuestions() {
+        audit = new JSONObject();
+        int selectedId;
+        String val;
+        Boolean val3;
+        JSONObject val2;
+
         if (questionCount != 0) {
-            audit = new JSONObject();
-            int selectedId;
-            String val;
-            Boolean val3;
-            JSONObject val2;
             for (int i = 0; i < questionCount; i++) {
                 val = new String();
                 val2 = new JSONObject();
@@ -189,7 +197,8 @@ public class audit_submit extends AppCompatActivity {
                     case "bool":
                         rg = (RadioGroup) checklist.findViewById(i + 100);
                         selectedId = rg.getCheckedRadioButtonId();
-                        if ((int) (selectedId / 100) == 4)
+                        Log.d("id", selectedId + " Id " + i);
+                        if (selectedId / 100 == 4)
                             val3 = true;
                         else
                             val3 = false;
@@ -202,14 +211,15 @@ public class audit_submit extends AppCompatActivity {
                     case "boolinfo":
                         rg = (RadioGroup) checklist.findViewById(i + 100);
                         selectedId = rg.getCheckedRadioButtonId();
-                        if ((int) (selectedId / 100) == 4) {
+                        if (selectedId / 100 == 4) {
                             try {
                                 val2.put("all", true);
-                                val2.put("all", "");
+                                val2.put("info", "");
                             } catch (JSONException e) {
                                 Log.e("js", "Invalid JSON string: ", e);
                             }
-                        } else {
+                        }
+                        else {
                             try {
                                 val2.put("all", false);
                                 inp = (EditText) checklist.findViewById(i + 300);
@@ -245,9 +255,6 @@ public class audit_submit extends AppCompatActivity {
                         break;
                 }
             }
-            temp = new TextView(getApplicationContext());
-            temp.setId(10000);
-            checklist.addView(temp);
             submitAudit(audit);
         }
     }
@@ -259,7 +266,7 @@ public class audit_submit extends AppCompatActivity {
                     public void onResponse(JSONArray response) {
                         questionCount = response.length();
                         questions = response;
-                        Log.e("Response " + questionCount, questions.toString());
+                        Log.d("Response " + questionCount, questions.toString());
                         showQuestions();
                     }
                 }, new Response.ErrorListener() {
@@ -267,12 +274,16 @@ public class audit_submit extends AppCompatActivity {
                     public void onErrorResponse(VolleyError error) {
                         VolleyLog.e("Error: ", error.getMessage());
 //                      error.printStackTrace();
+                        showQuestions();
+                        Toast.makeText(getApplicationContext(), "Network Error",
+                                Toast.LENGTH_LONG).show();
                     }
                 });
         helper.add(jsArrRequest);
     }
 
     private void submitAudit(final JSONObject auditData) {
+        Log.d("jsondata",auditData.toString());
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.POST, urlP, auditData, new Response.Listener<JSONObject>() {
                     @Override
@@ -282,15 +293,24 @@ public class audit_submit extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        temp = (TextView)checklist.findViewById(10000);
-                        temp.setText("Submitted Successfully");
+                        Toast.makeText(getApplicationContext(), "Submitted Successfully",
+                                Toast.LENGTH_LONG).show();
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        VolleyLog.e("Error: " + auditData.toString(), error.getMessage());
-                        temp = (TextView)checklist.findViewById(10000);
-                        temp.setText("Submission Unsuccessful. Please try again.");
+                        VolleyLog.e("Error: ", error.getMessage());
+                        if (error != null && error.networkResponse.statusCode == 400) {
+                            Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Invalid Bus ID",
+                                    Toast.LENGTH_LONG).show();
+                        } else if (error != null && error.networkResponse.statusCode == 500) {
+                            Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Database Server Error",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                        else {
+                            Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Network Error",
+                                    Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
         helper.add(jsObjRequest);

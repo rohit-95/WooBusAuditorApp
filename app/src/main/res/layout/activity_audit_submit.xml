@@ -10,12 +10,18 @@
     tools:context="in.woobus.app.auditor.audit_submit"
     android:background="#2d2d2d">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/cl1">
+        android:id="@+id/scrollView" >
 
-    </LinearLayout>
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/cl1">
+
+        </LinearLayout>
+    </ScrollView>
 </RelativeLayout>
