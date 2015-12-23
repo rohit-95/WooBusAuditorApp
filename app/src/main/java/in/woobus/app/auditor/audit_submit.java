@@ -1,5 +1,6 @@
 package in.woobus.app.auditor;
 
+import android.graphics.Color;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -23,17 +25,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class audit_submit extends AppCompatActivity {
-
-    LinearLayout checklist = new LinearLayout(this);
-    LinearLayout row;
+    LinearLayout checklist;
+    LinearLayout row, col;
     int questionCount = 0;
     JSONArray questions;
     JSONObject audit;
-    TextView[] questionArray;
     String[] qTypeArray;
     TextView temp;
     RadioButton yes, no;
     RadioGroup rg;
+    RatingBar rb;
     EditText inp;
     Button submit;
 
@@ -43,32 +44,49 @@ public class audit_submit extends AppCompatActivity {
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String url = "http://localhost:1337/api/v1/audits/";
+    final static String urlG = "http://192.168.56.1:1337/api/v1/audits/questions";
+    final static String urlP = "http://192.168.56.1:1337/api/v1/audits/add";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audit_submit);
 
+        checklist = (LinearLayout)findViewById(R.id.cl1);
+        checklist.setOrientation(LinearLayout.VERTICAL);
+
         loadQuestions();
 
+        submit = new Button(this);
+        submit.setLayoutParams(lwc);
+        submit.setBackgroundColor(Color.LTGRAY);
+        submit.setText("Submit");
+
+        submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                evalQuestions();
+            }
+        });
+    }
+
+    private void showQuestions() {
         if(questionCount != 0) {
-            questionArray = new TextView[questionCount];
             qTypeArray = new String[questionCount];
 
             for(int i = 0; i < questionCount; i++) {
                 final int j = i;
-                row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
+                col = new LinearLayout(getApplicationContext());
+                col.setOrientation(LinearLayout.VERTICAL);
 
-                temp = new TextView(this);
+                temp = new TextView(getApplicationContext());
                 try {
                     temp.setText(questions.getJSONObject(i).getString("question"));
                 } catch (JSONException e) {
                     Log.e("js", "Invalid JSON string", e);
                 }
-                row.addView(temp);
-                questionArray[i] = temp;
+
+                col.addView(temp);
 
                 try {
                     qTypeArray[i] = questions.getJSONObject(i).getString("q_type");
@@ -77,232 +95,186 @@ public class audit_submit extends AppCompatActivity {
                 }
                 switch (qTypeArray[i]) {
                     case "bool" :
-                        rg = new RadioGroup(this);
+                        rg = new RadioGroup(getApplicationContext());
                         rg.setOrientation(RadioGroup.HORIZONTAL);
-                        yes = new RadioButton(this); no = new RadioButton(this);
+                        yes = new RadioButton(getApplicationContext()); no = new RadioButton(getApplicationContext());
                         yes.setText("Yes"); no.setText("No");
+                        //yes.setTextColor(Color.BLACK);no.setTextColor(Color.BLACK);
                         yes.setId(i + 400);no.setId(i + 500);
                         rg.addView(yes); rg.addView(no);
                         rg.setId(i + 100);
-                        row.addView(rg);
-                        checklist.addView(row);
+                        col.addView(rg);
+                        checklist.addView(col);
                         break;
-                    case "binfo" :
-                        rg = new RadioGroup(this);
+                    case "boolinfo" :
+                        rg = new RadioGroup(getApplicationContext());
                         rg.setOrientation(RadioGroup.HORIZONTAL);
-                        yes = new RadioButton(this); no = new RadioButton(this);
+
+                        yes = new RadioButton(getApplicationContext()); no = new RadioButton(getApplicationContext());
                         yes.setText("Yes"); no.setText("No");
+                        //yes.setTextColor(Color.BLACK);no.setTextColor(Color.BLACK);
                         yes.setId(i + 400);no.setId(i + 500);
-                        no.setOnClickListener(new View.OnClickListener() {
+                        rg.addView(yes); rg.addView(no);
+                        rg.setId(i + 100);
+
+                        row = new LinearLayout(getApplicationContext());
+                        row.setOrientation(LinearLayout.HORIZONTAL);
+                        row.setLayoutParams(lmp);
+                        row.addView(rg);
+
+                        inp = new EditText(getApplicationContext());
+                        inp.setLayoutParams(lmp);
+                        inp.setId(i + 300);
+                        inp.setVisibility(View.GONE);
+                        row.addView(inp);
+
+                        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
                             @Override
-                            public void onClick(View v) {
-                                TextView tmp1 = new TextView(getApplicationContext());
-                                tmp1.setText("Seat Numbers: ");
-                                row.addView(tmp1);
-                                inp = new EditText(getApplicationContext());
-                                inp.setLayoutParams(lmp);
-                                inp.setId(j + 300);
-                                row.addView(inp);
+                            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                                if (checkedId / 100 == 5) {
+                                    inp = (EditText) checklist.findViewById(group.getId() % 10 + 300);
+                                    inp.setVisibility(View.VISIBLE);
+                                } else {
+                                    inp = (EditText) checklist.findViewById(group.getId() % 10 + 300);
+                                    inp.setVisibility(View.GONE);
+                                }
                             }
                         });
-                        rg.addView(yes); rg.addView(no);
-                        rg.setId(i + 100);
-                        row.addView(rg);
-                        checklist.addView(row);
+
+                        col.addView(row);
+                        checklist.addView(col);
                         break;
-                    case "2bool":
-                        TextView tmp1 = new TextView(this);
-                        try {
-                            tmp1.setText(questions.getJSONObject(i).getJSONObject("info").getString("1"));
-                        } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string", e);
-                        }
-                        row.addView(tmp1);
-
-                        rg = new RadioGroup(this);
-                        rg.setOrientation(RadioGroup.HORIZONTAL);
-                        yes = new RadioButton(this); no = new RadioButton(this);
-                        yes.setText("Yes"); no.setText("No");
-                        yes.setId(i + 400);no.setId(i + 500);
-                        rg.addView(yes); rg.addView(no);
-                        rg.setId(i + 100);
-                        row.addView(rg);
-                        checklist.addView(row);
-
-                        TextView tmp2 = new TextView(this);
-                        try {
-                            tmp2.setText(questions.getJSONObject(i).getJSONObject("info").getString("1"));
-                        } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string", e);
-                        }
-                        row.addView(tmp1);
-
-                        rg = new RadioGroup(this);
-                        rg.setOrientation(RadioGroup.HORIZONTAL);
-                        yes = new RadioButton(this); no = new RadioButton(this);
-                        yes.setText("Yes"); no.setText("No");
-                        yes.setId(i + 400);no.setId(i + 500);
-                        rg.addView(yes); rg.addView(no);
-                        rg.setId(i + 200);
-                        row.addView(rg);
-                        checklist.addView(row);
-                        break;
-                    case "num"  :
-                        inp = new EditText(this);
-                        inp.setLayoutParams(lmp);
-                        inp.setId(i + 300);
-                        row.addView(inp);
-                        checklist.addView(row);
+                    case "num":
+                        rb = new RatingBar(getApplicationContext());
+                        rb.setNumStars(5);
+                        rb.setLayoutParams(lwc);
+                        rb.setId(i + 300);
+                        col.addView(rb);
+                        checklist.addView(col);
                         break;
                     case "txt"  :
-                        inp = new EditText(this);
+                        inp = new EditText(getApplicationContext());
                         inp.setLayoutParams(lmp);
                         inp.setId(i + 300);
-                        row.addView(inp);
-                        checklist.addView(row);
+                        col.addView(inp);
+                        checklist.addView(col);
                         break;
                 }
+                LinearLayout space = new LinearLayout(getApplicationContext());
+                space.setLayoutParams(lwc);
+                space.setMinimumHeight(20);
+                checklist.addView(space);
             }
-            submit = new Button(this);
-            submit.setLayoutParams(lwc);
-            checklist.addView(submit);
         }
         else {
-            temp = new TextView(this);
+            temp = new TextView(getApplicationContext());
             temp.setText("No Questions on server");
             checklist.addView(temp);
             Log.i("noQ", "onCreate: No questions found");
         }
-        checklist.setId(R.id.cl1);
-
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                audit = new JSONObject();
-                int selectedId;
-                String val;
-                Boolean val3;
-                JSONObject val2;
-                for(int i = 0; i < questionCount; i++) {
-                    val = new String();
-                    val2 = new JSONObject();
-                    switch (qTypeArray[i]) {
-                        case "bool":
-                            rg = (RadioGroup) checklist.findViewById(i + 100);
-                            selectedId = rg.getCheckedRadioButtonId();
-                            if ((int) (selectedId / 100) == 4)
-                                val3 = true;
-                            else
-                                val3 = false;
-                            try {
-                                audit.put(questions.getJSONObject(i).getString("name"), val3);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string", e);
-                            }
-                            break;
-                        case "binfo":
-                            rg = (RadioGroup) checklist.findViewById(i + 100);
-                            selectedId = rg.getCheckedRadioButtonId();
-                            if ((int) (selectedId / 100) == 4) {
-                                try {
-                                    val2.put("all", true);
-                                    val2.put("all", "");
-                                } catch (JSONException e) {
-                                    Log.e("js", "Invalid JSON string: ", e);
-                                }
-                            }
-                            else {
-                                try {
-                                    val2.put("all", false);
-                                    inp = (EditText) checklist.findViewById(i + 300);
-                                    val2.put("info", inp.getText());
-                                } catch (JSONException e) {
-                                    Log.e("js", "Invalid JSON string: ", e);
-                                }
-                            }
-                            try {
-                                audit.put(questions.getJSONObject(i).getString("name"), val2);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                            break;
-                        case "2bool":
-                            rg = (RadioGroup) checklist.findViewById(i + 100);
-                            selectedId = rg.getCheckedRadioButtonId();
-                            if ((int) (selectedId / 100) == 4)
-                                val3 = true;
-                            else
-                                val3 = false;
-                            try {
-                                val2.put(questions.getJSONObject(i).getJSONObject("info").getString("1"), val3);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-
-                            rg = (RadioGroup) checklist.findViewById(i + 200);
-                            selectedId = rg.getCheckedRadioButtonId();
-                            if ((int) (selectedId / 100) == 4)
-                                val3 = true;
-                            else
-                                val3 = false;
-                            try {
-                                val2.put(questions.getJSONObject(i).getJSONObject("info").getString("2"), val3);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                            try {
-                                audit.put(questions.getJSONObject(i).getString("name"), val2);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                            break;
-                        case "txt" :
-                        case "num" :
-                            inp = (EditText) checklist.findViewById(i + 300);
-                            val = inp.getText().toString();
-                            try {
-                                audit.put(questions.getJSONObject(i).getString("name"), val);
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                            break;
-                    }
-                }
-                submitAudit(audit);
-                checklist = new LinearLayout(getApplicationContext());
-                temp = new TextView(getApplicationContext());
-                temp.setText("Submitted Successfully");
-                checklist.addView(temp);
-                checklist.setId(R.id.cl1);
-            }
-        });
+        checklist.addView(submit);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+    private void evalQuestions() {
+        if (questionCount != 0) {
+            audit = new JSONObject();
+            int selectedId;
+            String val;
+            Boolean val3;
+            JSONObject val2;
+            for (int i = 0; i < questionCount; i++) {
+                val = new String();
+                val2 = new JSONObject();
+                switch (qTypeArray[i]) {
+                    case "bool":
+                        rg = (RadioGroup) checklist.findViewById(i + 100);
+                        selectedId = rg.getCheckedRadioButtonId();
+                        if ((int) (selectedId / 100) == 4)
+                            val3 = true;
+                        else
+                            val3 = false;
+                        try {
+                            audit.put(questions.getJSONObject(i).getString("name"), val3);
+                        } catch (JSONException e) {
+                            Log.e("js", "Invalid JSON string", e);
+                        }
+                        break;
+                    case "boolinfo":
+                        rg = (RadioGroup) checklist.findViewById(i + 100);
+                        selectedId = rg.getCheckedRadioButtonId();
+                        if ((int) (selectedId / 100) == 4) {
+                            try {
+                                val2.put("all", true);
+                                val2.put("all", "");
+                            } catch (JSONException e) {
+                                Log.e("js", "Invalid JSON string: ", e);
+                            }
+                        } else {
+                            try {
+                                val2.put("all", false);
+                                inp = (EditText) checklist.findViewById(i + 300);
+                                val2.put("info", inp.getText());
+                            } catch (JSONException e) {
+                                Log.e("js", "Invalid JSON string: ", e);
+                            }
+                        }
+                        try {
+                            audit.put(questions.getJSONObject(i).getString("name"), val2);
+                        } catch (JSONException e) {
+                            Log.e("js", "Invalid JSON string: ", e);
+                        }
+                        break;
+                    case "num":
+                        float rate;
+                        rb = (RatingBar) checklist.findViewById(i + 300);
+                        rate = rb.getRating();
+                        try {
+                            audit.put(questions.getJSONObject(i).getString("name"), rate);
+                        } catch (JSONException e) {
+                            Log.e("js", "Invalid JSON string: ", e);
+                        }
+                        break;
+                    case "txt":
+                        inp = (EditText) checklist.findViewById(i + 300);
+                        val = inp.getText().toString();
+                        try {
+                            audit.put(questions.getJSONObject(i).getString("name"), val);
+                        } catch (JSONException e) {
+                            Log.e("js", "Invalid JSON string: ", e);
+                        }
+                        break;
+                }
+            }
+            temp = new TextView(getApplicationContext());
+            temp.setId(10000);
+            checklist.addView(temp);
+            submitAudit(audit);
+        }
     }
 
     private void loadQuestions() {
         JsonArrayRequest jsArrRequest = new JsonArrayRequest
-                (Request.Method.GET, url + "questions", null, new Response.Listener<JSONArray>() {
+                (Request.Method.GET, urlG, null, new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
                         questionCount = response.length();
                         questions = response;
+                        Log.e("Response " + questionCount, questions.toString());
+                        showQuestions();
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         VolleyLog.e("Error: ", error.getMessage());
+//                      error.printStackTrace();
                     }
                 });
         helper.add(jsArrRequest);
     }
 
-    private void submitAudit(JSONObject auditData) {
+    private void submitAudit(final JSONObject auditData) {
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.POST, url + "add", auditData, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, urlP, auditData, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
@@ -310,11 +282,15 @@ public class audit_submit extends AppCompatActivity {
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
+                        temp = (TextView)checklist.findViewById(10000);
+                        temp.setText("Submitted Successfully");
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        VolleyLog.e("Error: ", error.getMessage());
+                        VolleyLog.e("Error: " + auditData.toString(), error.getMessage());
+                        temp = (TextView)checklist.findViewById(10000);
+                        temp.setText("Submission Unsuccessful. Please try again.");
                     }
                 });
         helper.add(jsObjRequest);

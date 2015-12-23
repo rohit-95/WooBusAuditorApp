@@ -14,7 +14,6 @@ public class FetchQuestions extends Application {
     private RequestQueue mRequestQueue;
     private static FetchQuestions mInstance;
     public static final String TAG = FetchQuestions.class.getName();
-    private  static String url = "localhost:1337/api/v1/audits/questions";
 
     @Override
     public void onCreate() {
