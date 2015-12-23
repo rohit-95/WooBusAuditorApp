@@ -45,8 +45,7 @@ public class audit_submit extends AppCompatActivity {
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String urlG = "http://192.168.56.1:1337/api/v1/audits/questions";
-    final static String urlP = "http://192.168.56.1:1337/api/v1/audits/add";
+    final static String url = "http://192.168.0.107:1337/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -261,7 +260,7 @@ public class audit_submit extends AppCompatActivity {
 
     private void loadQuestions() {
         JsonArrayRequest jsArrRequest = new JsonArrayRequest
-                (Request.Method.GET, urlG, null, new Response.Listener<JSONArray>() {
+                (Request.Method.GET, url + "questions", null, new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
                         questionCount = response.length();
@@ -285,7 +284,7 @@ public class audit_submit extends AppCompatActivity {
     private void submitAudit(final JSONObject auditData) {
         Log.d("jsondata",auditData.toString());
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.POST, urlP, auditData, new Response.Listener<JSONObject>() {
+                (Request.Method.POST, url + "add", auditData, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
