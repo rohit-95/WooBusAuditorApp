@@ -12,7 +12,6 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.RatingBar;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -33,14 +32,19 @@ public class CustomAdapter extends ArrayAdapter<String> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
         View rowView = new View(context);
-        final TextView txtView;
-        String s = values[position];
+        TextView txtView;
         RadioGroup rg;
-        RadioButton rb;
+        Boolean found = true;
+
+        String s = values[position];
+        rowView.setTag(s);
+
         switch (s) {
             case "bool" :
                 rowView = inflater.inflate(R.layout.bool, parent, false);
+                rowView.setTag(s);
                 break;
             case "boolinfo" :
                 rowView = inflater.inflate(R.layout.bool, parent, false);
@@ -58,18 +62,22 @@ public class CustomAdapter extends ArrayAdapter<String> {
                     }
                 });
                 break;
-            case "num":
-                rowView = inflater.inflate(R.layout.ratings, parent, false);
+            case "rate":
+                rowView = inflater.inflate(R.layout.rate, parent, false);
                 break;
             case "txt"  :
                 rowView = inflater.inflate(R.layout.text, parent, false);
                 break;
+            default :
+                found = false;
         }
-        txtView = (TextView) rowView.findViewById(R.id.question);
-        try {
-            txtView.setText(questions.getJSONObject(position).getString("question"));
-        } catch (JSONException e) {
-            Log.e("js", "Invalid JSON string", e);
+        if(found) {
+            txtView = (TextView) rowView.findViewById(R.id.question);
+            try {
+                txtView.setText(questions.getJSONObject(position).getString("question"));
+            } catch (JSONException e) {
+                Log.e("js", "Invalid JSON string", e);
+            }
         }
         return rowView;
     }

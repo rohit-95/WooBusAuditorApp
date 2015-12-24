@@ -22,6 +22,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,11 +31,8 @@ import org.json.JSONObject;
 public class audit_submit extends ListActivity {
     String[] qTypeArray;
     TextView temp;
-    RadioButton yes, no;
-    RadioGroup rg;
-    RatingBar rb;
-    EditText inp;
     Button submit;
+    JSONArray questions;
 
 
     LinearLayout.LayoutParams lwc = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -42,23 +40,20 @@ public class audit_submit extends ListActivity {
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String url = "http://192.168.0.107:1337/api/v1/audits/";
+    final static String url = "http://dev.cachefi.com/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audit_submit);
-
-        JSONObject audit;
-
         loadQuestions();
     }
 
-    private void showQuestions(JSONArray questions) {
+    private void showQuestions() {
         int questionCount = questions.length();
-        if(questionCount != 0) {
-            qTypeArray = new String[questionCount];
+        qTypeArray = new String[questionCount + 1];
 
+        if(questionCount != 0) {
             for(int i = 0; i < questionCount; i++) {
                 try {
                     qTypeArray[i] = questions.getJSONObject(i).getString("q_type");
@@ -72,7 +67,7 @@ public class audit_submit extends ListActivity {
         else {
             temp = new TextView(getApplicationContext());
             temp.setText("No questions found on server");
-            addContentView(temp, lmp);
+            addContentView(temp, lwc);
             Log.i("noQ", "onCreate: No questions found");
         }
         submit = new Button(this);
@@ -81,103 +76,92 @@ public class audit_submit extends ListActivity {
         submit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //evalQuestions();
+                submitAudit();
             }
         });
-        addContentView(submit, lmp);
+        addContentView(submit, lwc);
     }
-/*
-    private void evalQuestions() {
-        audit = new JSONObject();
-        int selectedId;
-        String val;
-        Boolean val3;
-        JSONObject val2;
 
-        if (questionCount != 0) {
-            for (int i = 0; i < questionCount; i++) {
-                val = new String();
-                val2 = new JSONObject();
-                switch (qTypeArray[i]) {
-                    case "bool":
-                        rg = (RadioGroup) checklist.findViewById(i + 100);
-                        selectedId = rg.getCheckedRadioButtonId();
-                        Log.d("id", selectedId + " Id " + i);
-                        if (selectedId / 100 == 4)
-                            val3 = true;
-                        else
-                            val3 = false;
+    private JSONObject evalQuestions() {
+        JSONObject audit = new JSONObject();
+        ListView list = getListView();
+        int qCount = list.getChildCount();
+        View rowView;
+        String tag;
+        JSONObject tmp = new JSONObject();
+
+        for (int i = 0; i < qCount; i++) {
+            rowView = list.getChildAt(i);
+            tag = rowView.getTag().toString();
+
+            switch (tag) {
+                case "bool" :
+                    if ( ((RadioButton) rowView.findViewById(R.id.rbYes)).isChecked() ) {
                         try {
-                            audit.put(questions.getJSONObject(i).getString("name"), val3);
+                            audit.put(questions.getJSONObject(i).getString("name"), true);
                         } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string", e);
+                            Log.e(tag + " yes " + i, "Invalid JSON string", e);
                         }
-                        break;
-                    case "boolinfo":
-                        rg = (RadioGroup) checklist.findViewById(i + 100);
-                        selectedId = rg.getCheckedRadioButtonId();
-                        if (selectedId / 100 == 4) {
-                            try {
-                                val2.put("all", true);
-                                val2.put("info", "");
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                        }
-                        else {
-                            try {
-                                val2.put("all", false);
-                                inp = (EditText) checklist.findViewById(i + 300);
-                                val2.put("info", inp.getText());
-                            } catch (JSONException e) {
-                                Log.e("js", "Invalid JSON string: ", e);
-                            }
-                        }
+                    } else {
                         try {
-                            audit.put(questions.getJSONObject(i).getString("name"), val2);
+                            audit.put(questions.getJSONObject(i).getString("name"), false);
                         } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string: ", e);
+                            Log.e(tag + " no " + i, "Invalid JSON string", e);
                         }
-                        break;
-                    case "num":
-                        float rate;
-                        rb = (RatingBar) checklist.findViewById(i + 300);
-                        rate = rb.getRating();
+                    }
+                    break;
+                case "boolinfo" :
+                    if ( ((RadioButton) rowView.findViewById(R.id.rbYes)).isChecked() ) {
                         try {
-                            audit.put(questions.getJSONObject(i).getString("name"), rate);
+                            tmp.put("all", true);
+                            tmp.put("info", "");
+                            audit.put(questions.getJSONObject(i).getString("name"), tmp);
                         } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string: ", e);
+                            Log.e(tag + " yes " + i, "Invalid JSON string", e);
                         }
-                        break;
-                    case "txt":
-                        inp = (EditText) checklist.findViewById(i + 300);
-                        val = inp.getText().toString();
+                    } else {
                         try {
-                            audit.put(questions.getJSONObject(i).getString("name"), val);
+                            tmp.put("all", true);
+                            tmp.put("info", ((EditText) rowView.findViewById(R.id.info)).getText());
+                            audit.put(questions.getJSONObject(i).getString("name"), tmp);
                         } catch (JSONException e) {
-                            Log.e("js", "Invalid JSON string: ", e);
+                            Log.e(tag + " no " + i, "Invalid JSON string", e);
                         }
-                        break;
-                }
+                    }
+                    break;
+                case "rate" :
+                    try {
+                        audit.put(questions.getJSONObject(i).getString("name"),
+                                ((RatingBar) rowView.findViewById(R.id.ratingBar)).getRating());
+                    } catch (JSONException e) {
+                        Log.e(tag + " rating " + i, "Invalid JSON string", e);
+                    }
+                    break;
+                case "txt" :
+                    try {
+                        audit.put(questions.getJSONObject(i).getString("name"),
+                                ((EditText) rowView.findViewById(R.id.info)).getText());
+                    } catch (JSONException e) {
+                        Log.e(tag + " " + i, "Invalid JSON string", e);
+                    }
             }
-            submitAudit(audit);
         }
+        return audit;
     }
-*/
+
     private void loadQuestions() {
         JsonArrayRequest jsArrRequest = new JsonArrayRequest
                 (Request.Method.GET, url + "questions", null, new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
-                        Log.d("Response " + response.length(), response.toString());
-                        showQuestions(response);
+                        Log.i("Response " + response.length(), response.toString());
+                        questions = response;
+                        showQuestions();
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         VolleyLog.e("Error: ", error.getMessage());
-//                      error.printStackTrace();
-                        showQuestions(new JSONArray());
                         Toast.makeText(getApplicationContext(), "Network Error",
                                 Toast.LENGTH_LONG).show();
                     }
@@ -185,8 +169,9 @@ public class audit_submit extends ListActivity {
         helper.add(jsArrRequest);
     }
 
-    private void submitAudit(final JSONObject auditData) {
-        Log.d("jsondata",auditData.toString());
+    private void submitAudit() {
+        JSONObject auditData = evalQuestions();
+        Log.i("jsondata for submit",auditData.toString());
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.POST, url + "add", auditData, new Response.Listener<JSONObject>() {
                     @Override
