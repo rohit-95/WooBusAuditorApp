@@ -1,16 +1,18 @@
 package in.woobus.app.auditor;
 
+import android.app.ListActivity;
 import android.graphics.Color;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RatingBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,12 +27,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class audit_submit extends AppCompatActivity {
-    LinearLayout checklist;
-    LinearLayout row, col;
-    int questionCount = 0;
-    JSONArray questions;
-    JSONObject audit;
+public class audit_submit extends ListActivity {
     String[] qTypeArray;
     TextView temp;
     RadioButton yes, no;
@@ -52,135 +49,44 @@ public class audit_submit extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audit_submit);
 
-        checklist = (LinearLayout)findViewById(R.id.cl1);
-        checklist.setOrientation(LinearLayout.VERTICAL);
-
-        submit = new Button(this);
-        submit.setLayoutParams(lwc);
-        submit.setBackgroundColor(Color.LTGRAY);
-        submit.setText("Submit");
-        submit.setLayoutParams(lmp);
+        JSONObject audit;
 
         loadQuestions();
-
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                evalQuestions();
-            }
-        });
     }
 
-    private void showQuestions() {
+    private void showQuestions(JSONArray questions) {
+        int questionCount = questions.length();
         if(questionCount != 0) {
             qTypeArray = new String[questionCount];
 
             for(int i = 0; i < questionCount; i++) {
-                final int j = i;
-                col = new LinearLayout(getApplicationContext());
-                col.setOrientation(LinearLayout.VERTICAL);
-
-                temp = new TextView(getApplicationContext());
-                try {
-                    temp.setText(questions.getJSONObject(i).getString("question"));
-                } catch (JSONException e) {
-                    Log.e("js", "Invalid JSON string", e);
-                }
-                col.addView(temp);
                 try {
                     qTypeArray[i] = questions.getJSONObject(i).getString("q_type");
                 } catch (JSONException e) {
                     Log.e("js", "Invalid JSON string", e);
                 }
-
-                switch (qTypeArray[i]) {
-                    case "bool" :
-                        rg = new RadioGroup(getApplicationContext());
-                        rg.setOrientation(RadioGroup.HORIZONTAL);
-                        yes = new RadioButton(getApplicationContext()); no = new RadioButton(getApplicationContext());
-                        yes.setText("Yes"); no.setText("No");
-                        //yes.setTextColor(Color.BLACK);no.setTextColor(Color.BLACK);
-                        yes.setId(i + 400);no.setId(i + 500);
-                        rg.addView(yes); rg.addView(no);
-                        rg.setId(i + 100);
-                        col.addView(rg);
-                        checklist.addView(col);
-                        break;
-                    case "boolinfo" :
-                        rg = new RadioGroup(getApplicationContext());
-                        rg.setOrientation(RadioGroup.HORIZONTAL);
-
-                        yes = new RadioButton(getApplicationContext()); no = new RadioButton(getApplicationContext());
-                        yes.setText("Yes"); no.setText("No");
-                        //yes.setTextColor(Color.BLACK);no.setTextColor(Color.BLACK);
-                        yes.setId(i + 400);no.setId(i + 500);
-                        rg.addView(yes); rg.addView(no);
-                        rg.setId(i + 100);
-
-                        row = new LinearLayout(getApplicationContext());
-                        row.setOrientation(LinearLayout.HORIZONTAL);
-                        row.setLayoutParams(lmp);
-                        row.addView(rg);
-
-                        inp = new EditText(getApplicationContext());
-                        inp.setLayoutParams(lmp);
-                        inp.setId(i + 300);
-                        inp.setVisibility(View.GONE);
-                        row.addView(inp);
-
-                        rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                                if (checkedId / 100 == 5) {
-                                    inp = (EditText) checklist.findViewById(group.getId() % 10 + 300);
-                                    inp.setVisibility(View.VISIBLE);
-                                } else {
-                                    inp = (EditText) checklist.findViewById(group.getId() % 10 + 300);
-                                    inp.setVisibility(View.GONE);
-                                }
-                            }
-                        });
-
-                        col.addView(row);
-                        checklist.addView(col);
-                        break;
-                    case "num":
-                        rb = new RatingBar(getApplicationContext());
-                        rb.setNumStars(5);
-                        rb.setLayoutParams(lwc);
-                        rb.setId(i + 300);
-                        col.addView(rb);
-                        checklist.addView(col);
-                        break;
-                    case "txt"  :
-                        inp = new EditText(getApplicationContext());
-                        inp.setLayoutParams(lmp);
-                        inp.setId(i + 300);
-                        col.addView(inp);
-                        checklist.addView(col);
-                        break;
-                }
-                LinearLayout space = new LinearLayout(getApplicationContext());
-                space.setLayoutParams(lwc);
-                space.setMinimumHeight(20);
-                checklist.addView(space);
             }
+            CustomAdapter adapter = new CustomAdapter(getApplicationContext(), qTypeArray, questions);
+            setListAdapter(adapter);
         }
         else {
             temp = new TextView(getApplicationContext());
             temp.setText("No questions found on server");
-            temp.setLayoutParams(lmp);
-            checklist.addView(temp);
+            addContentView(temp, lmp);
             Log.i("noQ", "onCreate: No questions found");
-
-            LinearLayout space = new LinearLayout(getApplicationContext());
-            space.setLayoutParams(lwc);
-            space.setMinimumHeight(20);
-            checklist.addView(space);
         }
-        checklist.addView(submit);
+        submit = new Button(this);
+        submit.setBackgroundColor(Color.LTGRAY);
+        submit.setText("Submit");
+        submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //evalQuestions();
+            }
+        });
+        addContentView(submit, lmp);
     }
-
+/*
     private void evalQuestions() {
         audit = new JSONObject();
         int selectedId;
@@ -257,23 +163,21 @@ public class audit_submit extends AppCompatActivity {
             submitAudit(audit);
         }
     }
-
+*/
     private void loadQuestions() {
         JsonArrayRequest jsArrRequest = new JsonArrayRequest
                 (Request.Method.GET, url + "questions", null, new Response.Listener<JSONArray>() {
                     @Override
                     public void onResponse(JSONArray response) {
-                        questionCount = response.length();
-                        questions = response;
-                        Log.d("Response " + questionCount, questions.toString());
-                        showQuestions();
+                        Log.d("Response " + response.length(), response.toString());
+                        showQuestions(response);
                     }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         VolleyLog.e("Error: ", error.getMessage());
 //                      error.printStackTrace();
-                        showQuestions();
+                        showQuestions(new JSONArray());
                         Toast.makeText(getApplicationContext(), "Network Error",
                                 Toast.LENGTH_LONG).show();
                     }

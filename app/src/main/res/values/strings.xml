@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Auditor</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="hint">Enter Seat Numbers</string>
 </resources>
