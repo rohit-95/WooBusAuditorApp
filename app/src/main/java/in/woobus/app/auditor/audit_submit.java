@@ -45,7 +45,7 @@ public class audit_submit extends AppCompatActivity {
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String url = "http://192.168.0.107:1337/api/v1/audits/";
+    final static String url = "http://dev.cachefi.com/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +112,6 @@ public class audit_submit extends AppCompatActivity {
 
                         yes = new RadioButton(getApplicationContext()); no = new RadioButton(getApplicationContext());
                         yes.setText("Yes"); no.setText("No");
-                        //yes.setTextColor(Color.BLACK);no.setTextColor(Color.BLACK);
                         yes.setId(i + 400);no.setId(i + 500);
                         rg.addView(yes); rg.addView(no);
                         rg.setId(i + 100);
@@ -123,6 +122,8 @@ public class audit_submit extends AppCompatActivity {
                         row.addView(rg);
 
                         inp = new EditText(getApplicationContext());
+                        inp.setHint("Enter seat numbers");
+                        inp.setPadding(5, 5, 0, 0);
                         inp.setLayoutParams(lmp);
                         inp.setId(i + 300);
                         inp.setVisibility(View.GONE);
@@ -144,7 +145,7 @@ public class audit_submit extends AppCompatActivity {
                         col.addView(row);
                         checklist.addView(col);
                         break;
-                    case "num":
+                    case "rate":
                         rb = new RatingBar(getApplicationContext());
                         rb.setNumStars(5);
                         rb.setLayoutParams(lwc);
@@ -233,7 +234,7 @@ public class audit_submit extends AppCompatActivity {
                             Log.e("js", "Invalid JSON string: ", e);
                         }
                         break;
-                    case "num":
+                    case "rate":
                         float rate;
                         rb = (RatingBar) checklist.findViewById(i + 300);
                         rate = rb.getRating();
@@ -298,17 +299,20 @@ public class audit_submit extends AppCompatActivity {
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        VolleyLog.e("Error: ", error.getMessage());
+
                         if (error != null && error.networkResponse.statusCode == 400) {
                             Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Invalid Bus ID",
                                     Toast.LENGTH_LONG).show();
+                            VolleyLog.d("Error: ", error.getMessage());
                         } else if (error != null && error.networkResponse.statusCode == 500) {
                             Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Database Server Error",
                                     Toast.LENGTH_LONG).show();
+                            VolleyLog.d("Error: ", error.getMessage());
                         }
                         else {
                             Toast.makeText(getApplicationContext(), "Submission Unsuccessful. Network Error",
                                     Toast.LENGTH_LONG).show();
+                            VolleyLog.e("Error: ", error.getMessage());
                         }
                     }
                 });
