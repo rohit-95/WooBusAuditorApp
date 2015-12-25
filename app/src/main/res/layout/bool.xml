@@ -6,13 +6,14 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Small Text"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Small Medium"
         android:id="@+id/question"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:layout_marginLeft="30dp"
-        android:layout_marginBottom="5dp" />
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="5dp" />
 
     <RadioGroup
         android:layout_width="match_parent"
@@ -46,7 +47,7 @@
             android:id="@+id/info"
             android:layout_marginLeft="20dp"
             android:layout_marginRight="10dp"
-            android:visibility="invisible"
+            android:visibility="gone"
             android:hint="@string/hint" />
 
     </RadioGroup>

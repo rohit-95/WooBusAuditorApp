@@ -1,19 +1,13 @@
 package in.woobus.app.auditor;
 
-import android.app.ListActivity;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.RatingBar;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -22,70 +16,62 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.google.gson.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class audit_submit extends ListActivity {
+public class audit_submit extends AppCompatActivity{
     String[] qTypeArray;
-    TextView temp;
-    Button submit;
     JSONArray questions;
-
-
-    LinearLayout.LayoutParams lwc = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    LinearLayout.LayoutParams lmp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+    int qCount;
+    ListView list;
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String url = "http://dev.cachefi.com/api/v1/audits/";
+    final static String url2 = "http://dev.cachefi.com/api/v1/audits/";
+    final static String url = "http://192.168.0.107:1337/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audit_submit);
+
         loadQuestions();
     }
 
     private void showQuestions() {
-        int questionCount = questions.length();
-        qTypeArray = new String[questionCount + 1];
+        qCount = questions.length();
+        qTypeArray = new String[qCount + 1];
 
-        if(questionCount != 0) {
-            for(int i = 0; i < questionCount; i++) {
+        if(qCount != 0) {
+            for(int i = 0; i < qCount; i++) {
                 try {
                     qTypeArray[i] = questions.getJSONObject(i).getString("q_type");
                 } catch (JSONException e) {
                     Log.e("js", "Invalid JSON string", e);
                 }
             }
-            CustomAdapter adapter = new CustomAdapter(getApplicationContext(), qTypeArray, questions);
-            setListAdapter(adapter);
+            qTypeArray[qCount] = "found";
         }
         else {
-            temp = new TextView(getApplicationContext());
-            temp.setText("No questions found on server");
-            addContentView(temp, lwc);
+            qTypeArray[qCount] = "none";
             Log.i("noQ", "onCreate: No questions found");
         }
-        submit = new Button(this);
-        submit.setBackgroundColor(Color.LTGRAY);
-        submit.setText("Submit");
-        submit.setOnClickListener(new View.OnClickListener() {
+
+        CustomAdapter adapter = new CustomAdapter(getApplicationContext(), qTypeArray, questions);
+        adapter.setOnButtonClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 submitAudit();
             }
         });
-        addContentView(submit, lwc);
+        list = (ListView) findViewById(R.id.list);
+        list.setAdapter(adapter);
     }
 
-    private JSONObject evalQuestions() {
+    public JSONObject evalQuestions() {
         JSONObject audit = new JSONObject();
-        ListView list = getListView();
-        int qCount = list.getChildCount();
         View rowView;
         String tag;
         JSONObject tmp = new JSONObject();
@@ -171,7 +157,7 @@ public class audit_submit extends ListActivity {
 
     private void submitAudit() {
         JSONObject auditData = evalQuestions();
-        Log.i("jsondata for submit",auditData.toString());
+        Log.i("jsondata for submit", auditData.toString());
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.POST, url + "add", auditData, new Response.Listener<JSONObject>() {
                     @Override

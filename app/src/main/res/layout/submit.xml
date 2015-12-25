@@ -2,28 +2,28 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/txt"
-    android:tag="txt">
+    android:id="@+id/submit"
+    android:background="#2d2d2d">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Medium Text"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Large Text"
         android:id="@+id/question"
-        android:layout_marginLeft="30dp"
-        android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="30dp"
         android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp" />
+        android:layout_alignParentEnd="false" />
 
-    <EditText
-        android:layout_width="wrap_content"
+    <Button
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="textMultiLine"
-        android:ems="10"
-        android:id="@+id/info"
-        android:layout_marginLeft="0dp"
+        android:text="@string/button"
+        android:id="@+id/button"
         android:layout_below="@+id/question"
-        android:layout_alignStart="@+id/question" />
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="30dp"
+        android:layout_marginLeft="30dp" />
 </RelativeLayout>

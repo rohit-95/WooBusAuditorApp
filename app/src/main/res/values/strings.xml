@@ -3,4 +3,6 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="hint">Enter Seat Numbers</string>
+    <string name="noQ">No questions found on server</string>
+    <string name="button">Submit</string>
 </resources>
