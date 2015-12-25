@@ -81,7 +81,7 @@ public class audit_submit extends AppCompatActivity{
             tag = rowView.getTag().toString();
 
             switch (tag) {
-                case "bool" :
+                case "row" :
                     if ( ((RadioButton) rowView.findViewById(R.id.rbYes)).isChecked() ) {
                         try {
                             audit.put(questions.getJSONObject(i).getString("name"), true);
