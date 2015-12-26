@@ -4,10 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.RadioButton;
-import android.widget.RatingBar;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -21,6 +18,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class audit_submit extends AppCompatActivity{
     String[] qTypeArray;
     JSONArray questions;
@@ -29,8 +29,8 @@ public class audit_submit extends AppCompatActivity{
 
     FetchQuestions helper = FetchQuestions.getInstance();
 
-    final static String url2 = "http://dev.cachefi.com/api/v1/audits/";
-    final static String url = "http://192.168.0.107:1337/api/v1/audits/";
+    final static String url = "http://dev.cachefi.com/api/v1/audits/";
+    final static String url2 = "http://192.168.0.107:1337/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,13 +52,11 @@ public class audit_submit extends AppCompatActivity{
                     Log.e("js", "Invalid JSON string", e);
                 }
             }
-            qTypeArray[qCount] = "found";
         }
         else {
-            qTypeArray[qCount] = "none";
             Log.i("noQ", "onCreate: No questions found");
         }
-
+        qTypeArray[qCount] = "button";
         CustomAdapter adapter = new CustomAdapter(getApplicationContext(), qTypeArray, questions);
         adapter.setOnButtonClickListener(new View.OnClickListener() {
             @Override
@@ -72,61 +70,47 @@ public class audit_submit extends AppCompatActivity{
 
     public JSONObject evalQuestions() {
         JSONObject audit = new JSONObject();
-        View rowView;
         String tag;
         JSONObject tmp = new JSONObject();
-
+        List<CustomAdapter.Answer> answers = ((CustomAdapter) list.getAdapter()).getAnswers();
+        CustomAdapter.Answer ans;
         for (int i = 0; i < qCount; i++) {
-            rowView = list.getChildAt(i);
-            tag = rowView.getTag().toString();
-
+            ans = answers.get(i);
+            tag = ans.type;
             switch (tag) {
                 case "bool" :
-                    if ( ((RadioButton) rowView.findViewById(R.id.rbYes)).isChecked() ) {
-                        try {
-                            audit.put(questions.getJSONObject(i).getString("name"), true);
-                        } catch (JSONException e) {
-                            Log.e(tag + " yes " + i, "Invalid JSON string", e);
-                        }
-                    } else {
-                        try {
-                            audit.put(questions.getJSONObject(i).getString("name"), false);
-                        } catch (JSONException e) {
-                            Log.e(tag + " no " + i, "Invalid JSON string", e);
-                        }
+                    try {
+                        audit.put(questions.getJSONObject(i).getString("name"), ans.choice);
+                    } catch (JSONException e) {
+                        Log.e(tag + " yes " + i, "Invalid JSON string", e);
                     }
                     break;
                 case "boolinfo" :
-                    if ( ((RadioButton) rowView.findViewById(R.id.rbYes)).isChecked() ) {
-                        try {
-                            tmp.put("all", true);
-                            tmp.put("info", "");
-                            audit.put(questions.getJSONObject(i).getString("name"), tmp);
-                        } catch (JSONException e) {
-                            Log.e(tag + " yes " + i, "Invalid JSON string", e);
-                        }
-                    } else {
-                        try {
-                            tmp.put("all", true);
-                            tmp.put("info", ((EditText) rowView.findViewById(R.id.info)).getText());
-                            audit.put(questions.getJSONObject(i).getString("name"), tmp);
-                        } catch (JSONException e) {
-                            Log.e(tag + " no " + i, "Invalid JSON string", e);
-                        }
+                    try {
+                        tmp.put("all", ans.choice);
+                        tmp.put("info", ans.info);
+                        audit.put(questions.getJSONObject(i).getString("name"), tmp);
+                    } catch (JSONException e) {
+                        Log.e(tag + " yes " + i, "Invalid JSON string", e);
                     }
                     break;
                 case "rate" :
                     try {
-                        audit.put(questions.getJSONObject(i).getString("name"),
-                                ((RatingBar) rowView.findViewById(R.id.ratingBar)).getRating());
+                        audit.put(questions.getJSONObject(i).getString("name"), Float.valueOf(ans.info));
                     } catch (JSONException e) {
                         Log.e(tag + " rating " + i, "Invalid JSON string", e);
                     }
                     break;
                 case "txt" :
                     try {
-                        audit.put(questions.getJSONObject(i).getString("name"),
-                                ((EditText) rowView.findViewById(R.id.info)).getText());
+                        audit.put(questions.getJSONObject(i).getString("name"), ans.info);
+                    } catch (JSONException e) {
+                        Log.e(tag + " " + i, "Invalid JSON string", e);
+                    }
+                    break;
+                case "num" :
+                    try {
+                        audit.put(questions.getJSONObject(i).getString("name"), Integer.valueOf(ans.info));
                     } catch (JSONException e) {
                         Log.e(tag + " " + i, "Invalid JSON string", e);
                     }
