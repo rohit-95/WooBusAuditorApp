@@ -4,8 +4,7 @@
 package in.woobus.app.auditor;
 
 import android.content.Context;
-import android.content.DialogInterface;
-import android.provider.MediaStore;
+import android.graphics.Color;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
@@ -21,11 +20,8 @@ import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
-import com.android.volley.ParseError;
-
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +31,7 @@ public class CustomAdapter extends ArrayAdapter<String> {
     private final String[] values;
     private final JSONArray questions;
     private View.OnClickListener onButtonClickListener;
+    private int TYPE_MAX_COUNT = 7;
 
     public class Answer {
         public Boolean choice = null;
@@ -67,7 +64,7 @@ public class CustomAdapter extends ArrayAdapter<String> {
         this.context = context;
         this.values = values;
         this.questions = questions;
-        for(int i = 0; i < questions.length(); i++) {
+        for(int i = 0; i <= questions.length(); i++) {
             answers.add(new Answer(false, "0", values[i]));
         }
     }
@@ -80,84 +77,65 @@ public class CustomAdapter extends ArrayAdapter<String> {
         final ViewHolderBool holderBool;
         final ViewHolderText holderText;
         final ViewHolderRate holderRate;
-        Log.d("arr before", answers.get(position).toString() + " " + position);
-        //Log.d("array", answers.get(position).toString() + " " + s + " " + position);
         switch (s) {
             case "bool" :
-                if (convertView == null || ((ViewHolder)convertView.getTag()).type != "bool") {
-                    convertView = inflater.inflate(R.layout.bool, parent, false);
-                    holderBool = new ViewHolderBool(convertView);
-                    holderBool.question.setText(getItem(position));
-                    holderBool.rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(RadioGroup group, int checkedId) {
-                            if (holderBool.rbN.isChecked()) {
-                                answers.set(position, tmp.s(true, "", s));
-                            } else {
-                                answers.set(position, tmp.s(false, "", s));
-                            }
-                        }
-                    });
-                    convertView.setTag(holderBool);
-                } else {
-                    holderBool = (ViewHolderBool) convertView.getTag();
-                }
-                if (answers.get(position) != null) {
-                    holderBool.rbY.setChecked(answers.get(position).choice);
-                    holderBool.rbN.setChecked(!answers.get(position).choice);
-                }
-                break;
             case "boolinfo" :
-                if (convertView == null || ((ViewHolder)convertView.getTag()).type != "bool") {
+                if (convertView == null) {
                     convertView = inflater.inflate(R.layout.bool, parent, false);
                     holderBool = new ViewHolderBool(convertView);
-                    holderBool.rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-                        @Override
-                        public void onCheckedChanged(RadioGroup group, int checkedId) {
-                            if (holderBool.rbY.isChecked()) {
-                                answers.set(position, tmp.s(true, "", s));
-                                Log.d("changed", answers.get(position).toString() + " " + position);
-                                holderBool.info.setVisibility(View.INVISIBLE);
-                            } else {
-                                holderBool.info.setVisibility(View.VISIBLE);
-                                answers.set(position, tmp.s(false, holderBool.info.getText().toString(), s));
-                                Log.d("changed", answers.get(position).toString() + " " + position);
-                            }
-                        }
-                    });
                     holderBool.info.addTextChangedListener(new TextWatcher() {
                         @Override
                         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                         }
 
                         @Override
-                        public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        }
+                        public void onTextChanged(CharSequence edit, int start, int before, int count) {}
 
                         @Override
                         public void afterTextChanged(Editable edit) {
-                            answers.set(position, tmp.s(false, holderBool.info.getText().toString(), s));
+                            answers.set(position, tmp.s(answers.get(position).choice, holderBool.info.getText().toString(), s));
+                        }
+                    });
+                    holderBool.rg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+                        @Override
+                        public void onCheckedChanged(RadioGroup group, int checkedId) {
+                            if (holderBool.rbY.getId() == checkedId) {
+                                answers.set(position, tmp.s(true, answers.get(position).info, s));
+                                if (s.equals("boolinfo")) {
+                                    holderBool.info.setVisibility(View.INVISIBLE);
+                                }
+                            } else {
+                                answers.set(position, tmp.s(false, holderBool.info.getText().toString(), s));
+                                if (s.equals("boolinfo")) {
+                                    holderBool.info.setVisibility(View.VISIBLE);
+                                }
+                            }
                         }
                     });
                     convertView.setTag(holderBool);
                 } else {
                     holderBool = (ViewHolderBool) convertView.getTag();
                 }
+
                 holderBool.question.setText(getItem(position));
-                if (answers.get(position) != null) {
-                    Log.d("changed", answers.get(position).toString() + " " + position);
-                    holderBool.rbY.setChecked(answers.get(position).choice);
-                    holderBool.rbN.setChecked(!answers.get(position).choice);
-                    holderBool.info.setText(answers.get(position).info);
-                }
+                holderBool.rbY.setChecked(answers.get(position).choice);
+                holderBool.rbN.setChecked(!answers.get(position).choice);
+                holderBool.info.setText(answers.get(position).info);
+                if (s.equals("bool"))
+                    holderBool.info.setVisibility(View.GONE);
+                else if (holderBool.rbN.isChecked())
+                    holderBool.info.setVisibility(View.VISIBLE);
+                else
+                    holderBool.info.setVisibility(View.INVISIBLE);
+
                 break;
             case "rate" :
-                if (convertView == null || ((ViewHolder)convertView.getTag()).type != "rate") {
+                if (convertView == null) {
                     convertView = inflater.inflate(R.layout.rate, parent, false);
                     holderRate = new ViewHolderRate(convertView);
-                    holderRate.rating.setOnClickListener(new View.OnClickListener() {
+                    holderRate.rating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
                         @Override
-                        public void onClick(View v) {
+                        public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
                             answers.set(position, tmp.s(true, String.valueOf(holderRate.rating.getRating()), s));
                         }
                     });
@@ -166,46 +144,21 @@ public class CustomAdapter extends ArrayAdapter<String> {
                     holderRate = (ViewHolderRate) convertView.getTag();
                 }
                 holderRate.question.setText(getItem(position));
-                if (answers.get(position) != null) {
-                    holderRate.rating.setRating(Float.valueOf(answers.get(position).info));
-                }
+                holderRate.rating.setRating(Float.valueOf(answers.get(position).info));
                 break;
-            case "txt"  :
-                if (convertView == null || ((ViewHolder)convertView.getTag()).type != "txt") {
-                    convertView = inflater.inflate(R.layout.text, parent, false);
-                    holderText = new ViewHolderText(convertView);
-                    holderText.info.addTextChangedListener(new TextWatcher() {
-                        @Override
-                        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-                        @Override
-                        public void onTextChanged(CharSequence s, int start, int before, int count) {}
-
-                        @Override
-                        public void afterTextChanged(Editable edit) {
-                            answers.set(position, tmp.s(true, holderText.info.getText().toString(), s));
-                        }
-                    });
-                    convertView.setTag(holderText);
-                } else {
-                    holderText = (ViewHolderText) convertView.getTag();
-                }
-                holderText.question.setText(getItem(position));
-                if (answers.get(position) != null) {
-                    holderText.info.setText(answers.get(position).info);
-                }
-                break;
+            case "txt" :
             case "num" :
-                if (convertView == null  || ((ViewHolder)convertView.getTag()).type != "txt") {
+            case "longtxt"  :
+                if (convertView == null) {
                     convertView = inflater.inflate(R.layout.text, parent, false);
                     holderText = new ViewHolderText(convertView);
-                    holderText.info.setInputType(InputType.TYPE_CLASS_NUMBER);
                     holderText.info.addTextChangedListener(new TextWatcher() {
                         @Override
                         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                         @Override
-                        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                        public void onTextChanged(CharSequence edit, int start, int before, int count) {
+                        }
 
                         @Override
                         public void afterTextChanged(Editable edit) {
@@ -216,9 +169,16 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 } else {
                     holderText = (ViewHolderText) convertView.getTag();
                 }
+
                 holderText.question.setText(getItem(position));
-                if (answers.get(position) != null) {
-                    holderText.info.setText(answers.get(position).info);
+                holderText.info.setText(answers.get(position).info);
+
+                if (s.equals("longtext")) {
+                    holderText.info.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                } else if (s.equals("num")) {
+                    holderText.info.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
+                } else {
+                    holderText.info.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
                 }
                 break;
             case "button" :
@@ -227,6 +187,7 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 if (questions.length() != 0) {
                     Button submit = (Button) convertView.findViewById(R.id.button);
                     submit.setOnClickListener(this.onButtonClickListener);
+                    submit.setBackgroundColor(Color.LTGRAY);
                 }
                 else {
                     txtView.setVisibility(TextView.VISIBLE);
@@ -234,7 +195,6 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 }
                 break;
         }
-        Log.d("arr after", answers.get(position).toString() + " " + position);
         return convertView;
     }
 
@@ -246,6 +206,26 @@ public class CustomAdapter extends ArrayAdapter<String> {
             Log.e("js", "Invalid JSON string", e);
         }
         return "No questions found";
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return TYPE_MAX_COUNT;
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        int r = 3;
+        switch (values[position]) {
+            case "bool" : r = 0; break;
+            case "boolinfo" : r =1; break;
+            case "rate" : r = 2; break;
+            case "txt" : r = 3; break;
+            case "num" : r = 4; break;
+            case "longtxt" : r = 5; break;
+            case "button" : r = 6; break;
+        }
+        return r;
     }
 
     public void setOnButtonClickListener (final View.OnClickListener listener) {

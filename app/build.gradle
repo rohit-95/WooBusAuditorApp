@@ -26,5 +26,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.android.support:appcompat-v7:23.+'
     compile project(':volley')
-    compile 'com.google.code.gson:gson:2.2.4'
+    compile 'io.nlopez.smartlocation:library:3.2.0'
 }
