@@ -58,6 +58,7 @@ public class CustomAdapter extends ArrayAdapter<String> {
     }
 
     private final List<Answer> answers = new ArrayList<>();
+    private final Answer tmp = new Answer(false, "", "");
 
     public CustomAdapter(Context context, String[] values, JSONArray questions) {
         super(context, -1, values);
@@ -65,18 +66,18 @@ public class CustomAdapter extends ArrayAdapter<String> {
         this.values = values;
         this.questions = questions;
         for(int i = 0; i <= questions.length(); i++) {
-            answers.add(new Answer(false, "0", values[i]));
+            answers.add(new Answer(false, "", values[i]));
         }
     }
 
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final Answer tmp = new Answer(true, "", "");
         final String s = values[position];
         final ViewHolderBool holderBool;
         final ViewHolderText holderText;
         final ViewHolderRate holderRate;
+        tmp.s(true, "", s);
         switch (s) {
             case "bool" :
             case "boolinfo" :
@@ -121,15 +122,16 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 holderBool.rbY.setChecked(answers.get(position).choice);
                 holderBool.rbN.setChecked(!answers.get(position).choice);
                 holderBool.info.setText(answers.get(position).info);
+
                 if (s.equals("bool"))
                     holderBool.info.setVisibility(View.GONE);
                 else if (holderBool.rbN.isChecked())
                     holderBool.info.setVisibility(View.VISIBLE);
                 else
                     holderBool.info.setVisibility(View.INVISIBLE);
-
                 break;
             case "rate" :
+                answers.get(position).info = "0";
                 if (convertView == null) {
                     convertView = inflater.inflate(R.layout.rate, parent, false);
                     holderRate = new ViewHolderRate(convertView);
@@ -152,7 +154,7 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 if (convertView == null) {
                     convertView = inflater.inflate(R.layout.text, parent, false);
                     holderText = new ViewHolderText(convertView);
-                    holderText.info.addTextChangedListener(new TextWatcher() {
+                   /* holderText.info.addTextChangedListener(new TextWatcher() {
                         @Override
                         public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -165,14 +167,11 @@ public class CustomAdapter extends ArrayAdapter<String> {
                             answers.set(position, tmp.s(true, holderText.info.getText().toString(), s));
                         }
                     });
+                    */
                     convertView.setTag(holderText);
                 } else {
                     holderText = (ViewHolderText) convertView.getTag();
                 }
-
-                holderText.question.setText(getItem(position));
-                holderText.info.setText(answers.get(position).info);
-
                 if (s.equals("longtext")) {
                     holderText.info.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                 } else if (s.equals("num")) {
@@ -180,16 +179,18 @@ public class CustomAdapter extends ArrayAdapter<String> {
                 } else {
                     holderText.info.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
                 }
+
+                holderText.question.setText(getItem(position));
+                holderText.info.setText(answers.get(position).info);
                 break;
             case "button" :
                 convertView = inflater.inflate(R.layout.submit, parent, false);
                 TextView txtView = (TextView) convertView.findViewById(R.id.question);
+                Button submit = (Button) convertView.findViewById(R.id.button);
                 if (questions.length() != 0) {
-                    Button submit = (Button) convertView.findViewById(R.id.button);
                     submit.setOnClickListener(this.onButtonClickListener);
                     submit.setBackgroundColor(Color.LTGRAY);
-                }
-                else {
+                } else {
                     txtView.setVisibility(TextView.VISIBLE);
                     txtView.setText(R.string.noQ);
                 }

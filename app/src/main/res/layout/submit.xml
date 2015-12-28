@@ -3,7 +3,7 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/submit"
-    android:background="#2d2d2d">
+    android:background="@color/colorBg">
 
     <TextView
         android:layout_width="wrap_content"
@@ -13,7 +13,7 @@
         android:id="@+id/question"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
-        android:layout_marginLeft="30dp"
+        android:layout_marginLeft="0dp"
         android:layout_marginTop="5dp"
         android:layout_alignParentEnd="false"
         android:visibility="gone" />
@@ -26,5 +26,6 @@
         android:layout_below="@+id/question"
         android:layout_marginTop="5dp"
         android:layout_marginRight="30dp"
-        android:layout_marginLeft="30dp" />
+        android:layout_marginLeft="30dp"
+        android:background="@drawable/button"/>
 </RelativeLayout>

@@ -34,18 +34,28 @@ public class audit_submit extends AppCompatActivity {
     Location loc;
 
     final static String url2 = "http://dev.cachefi.com/api/v1/audits/";
-    final static String url = "http://192.168.0.100:1337/api/v1/audits/";
+    final static String url = "http://192.168.0.105:1337/api/v1/audits/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audit_submit);
-
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        /*
+        Smart-Location library function to update location one time
+         */
+        SmartLocation.with(getApplicationContext()).location()
+                .oneFix()
+                .start(new OnLocationUpdatedListener() {
+                    @Override
+                    public void onLocationUpdated(Location location) {
+                        loc = location;
+                    }
+                });
         loadQuestions();
     }
 
@@ -85,20 +95,12 @@ public class audit_submit extends AppCompatActivity {
         List<CustomAdapter.Answer> answers = ((CustomAdapter) list.getAdapter()).getAnswers();
         CustomAdapter.Answer ans;
 
-        /*
-        Smart-Location library function to update location one time
-         */
-        SmartLocation.with(getApplicationContext()).location()
-                .oneFix()
-                .start(new OnLocationUpdatedListener() {
-                    @Override
-                    public void onLocationUpdated(Location location) {
-                        loc = location;
-                    }
-                });
-
         for (int i = 0; i < qCount; i++) {
             ans = answers.get(i);
+            if (!ans.set) {
+                Toast.makeText(getApplicationContext(), "Please fill thso",
+                        Toast.LENGTH_LONG).show();
+            }
             tag = ans.type;
             switch (tag) {
                 case "bool" :
@@ -124,6 +126,7 @@ public class audit_submit extends AppCompatActivity {
                         Log.e(tag + " rating " + i, "Invalid JSON string", e);
                     }
                     break;
+                case "longtxt" :
                 case "txt" :
                     try {
                         audit.put(questions.getJSONObject(i).getString("name"), ans.info);
@@ -141,8 +144,13 @@ public class audit_submit extends AppCompatActivity {
         }
         Log.d("loc", loc + " ");
         try {
-            if (loc != null) {
-                audit.put("location", loc);
+            if (loc == null) {
+            } else {
+                JSONArray tmp_loc = new JSONArray();
+                tmp_loc.put(0, loc.getLongitude());
+                tmp_loc.put(1, loc.getLatitude());
+                Log.d("loc", tmp_loc.toString() + " ");
+                audit.put("location", tmp);
             }
         } catch (JSONException e) {
             Log.e("location", "Invalid JSON string", e);

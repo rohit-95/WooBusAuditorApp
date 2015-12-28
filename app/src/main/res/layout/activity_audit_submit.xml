@@ -6,13 +6,12 @@
     android:layout_centerHorizontal="true"
     android:layout_alignParentTop="true"
     tools:context="in.woobus.app.auditor.audit_submit"
-    android:background="#2d2d2d" >
+    android:background="#1e1e1e">
     <ListView
         android:id="@+id/list"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
-        android:background="#2d2d2d">
+        android:layout_alignParentTop="true">
     </ListView>
 </RelativeLayout>
